@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Tourist Map of Padang</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+      background: #f0f2f5;
+    }
+
+    #sidebar {
+      width: 300px;
+      background: #ffffff;
+      padding: 1rem;
+      border-right: 1px solid #ddd;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #sidebar h2 {
+      text-align: center;
+      font-size: 1.4rem;
+      margin: 0 0 1rem;
+      color: #333;
+    }
+
+    #search {
+      padding: 0.5rem 0.75rem;
+      margin-bottom: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 0.95rem;
+    }
+
+    #attraction-list {
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .attraction {
+      display: flex;
+      align-items: center;
+      padding: 10px;
+      border-radius: 6px;
+      transition: background 0.2s;
+      margin-bottom: 8px;
+      cursor: pointer;
+    }
+
+    .attraction:hover {
+      background: #f2f2f2;
+    }
+
+    .attraction img {
+      width: 52px;
+      height: 52px;
+      object-fit: cover;
+      border-radius: 6px;
+      flex-shrink: 0;
+    }
+
+    .attraction-name {
+      margin-left: 10px;
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: #333;
+    }
+
+    #map {
+      flex: 1;
+      height: 100%;
+    }
+
+    #sidebar::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    #sidebar::-webkit-scrollbar-thumb {
+      background: #ccc;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="sidebar">
+    <h2>Padang Attractions</h2>
+    <input type="text" id="search" placeholder="Search attractions...">
+    <div id="attraction-list"></div>
+  </div>
+
+  <div id="map"></div>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+    var map = L.map('map').setView([-0.9471, 100.4172], 13); // Padang
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    var attractions = [
+      {
+        name: "Pantai Air Manis",
+        lat: -1.0078,
+        lon: 100.3616,
+        img: "https://upload.wikimedia.org/wikipedia/commons/8/87/Aia_Manih.jpg",
+        category: "Beach",
+        desc: "Pantai dengan legenda Malin Kundang yang terkenal."
+      },
+      {
+        name: "Jembatan Siti Nurbaya",
+        lat: -0.9613,
+        lon: 100.3608,
+        img: "https://upload.wikimedia.org/wikipedia/commons/d/db/Jembatan_di_muaro_Padang.jpg",
+        category: "Cultural",
+        desc: "Ikon legendaris dari cerita Siti Nurbaya di tepi Sungai Batang Arau."
+      },
+      {
+        name: "Museum Adityawarman",
+        lat: -0.9437,
+        lon: 100.3678,
+        img: "https://upload.wikimedia.org/wikipedia/commons/8/86/Museum_Adityawarman_20211213.jpg",
+        category: "Cultural",
+        desc: "Museum sejarah dan budaya Minangkabau di tengah kota."
+      },
+      {
+        name: "Pantai Padang",
+        lat: -0.9556,
+        lon: 100.3590,
+        img: "https://upload.wikimedia.org/wikipedia/commons/8/82/Pantai_Padang_saat_PPKM_Darurat_Juli_2021.jpg",
+        category: "Beach",
+        desc: "Pantai utama kota dengan sunset dan jalur pejalan kaki."
+      },
+      {
+        name: "Gunung Padang",
+        lat: -0.9636,
+        lon: 100.3612,
+        img: "https://upload.wikimedia.org/wikipedia/commons/d/d6/Penataan_Pantai_Padang_Era_Mahyeldi_123.jpg",
+        category: "Nature",
+        desc: "Bukit dengan pemandangan laut dan Kota Tua Padang."
+      },
+      {
+        name: "Masjid Raya Sumatera Barat",
+        lat: -0.9205,
+        lon: 100.3624,
+        img: "https://upload.wikimedia.org/wikipedia/commons/c/c9/Khatib_Sulaiman_Feb_2018.png",
+        category: "Religious",
+        desc: "Masjid megah dengan arsitektur khas Minangkabau."
+      }
+    ];
+
+    var markers = [];
+    var listEl = document.getElementById('attraction-list');
+    var searchInput = document.getElementById('search');
+
+    function createAttractionElement(attraction, marker) {
+      var div = document.createElement('div');
+      div.className = 'attraction';
+
+      var img = document.createElement('img');
+      img.src = attraction.img;
+
+      var info = document.createElement('div');
+      info.style.display = "flex";
+      info.style.flexDirection = "column";
+
+      var name = document.createElement('div');
+      name.className = 'attraction-name';
+      name.textContent = `📍 ${attraction.name}`;
+
+      var cat = document.createElement('small');
+      cat.style.color = "#666";
+      cat.textContent = attraction.category;
+
+      info.appendChild(name);
+      info.appendChild(cat);
+
+      div.appendChild(img);
+      div.appendChild(info);
+
+      div.addEventListener('click', function () {
+        map.setView([attraction.lat, attraction.lon], 15);
+        marker.openPopup();
+      });
+
+      return div;
+    }
+
+    function renderList(filter = "") {
+      listEl.innerHTML = "";
+      attractions.forEach((attraction, index) => {
+        if (attraction.name.toLowerCase().includes(filter.toLowerCase())) {
+          listEl.appendChild(createAttractionElement(attraction, markers[index]));
+        }
+      });
+    }
+
+    attractions.forEach(function(attraction) {
+      var marker = L.marker([attraction.lat, attraction.lon])
+        .addTo(map)
+        .bindPopup(`<strong>${attraction.name}</strong><br><em>${attraction.category}</em><br><img src="${attraction.img}" width="150" style="margin-top:5px;"><br><p style="margin:5px 0 0;font-size:0.85rem;">${attraction.desc}</p>`);
+      markers.push(marker);
+    });
+
+    renderList();
+
+    searchInput.addEventListener("input", function () {
+      renderList(this.value);
+    });
+  </script>
+
+</body>
+</html>
