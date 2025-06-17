@@ -6,95 +6,141 @@
   <title>Tourist Map of Padang</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <style>
-    * {
-      box-sizing: border-box;
-    }
+  * {
+    box-sizing: border-box;
+  }
 
+  body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+    background: #f0f2f5;
+  }
+
+  #sidebar {
+    width: 300px;
+    background: #fff;
+    padding: 1rem;
+    border-right: 1px solid #ddd;
+    overflow-y: auto;
+    z-index: 1000;
+  }
+
+  #map {
+    flex: 1;
+    height: 100%;
+    z-index: 0;
+  }
+
+  #sidebar h2 {
+    text-align: center;
+    font-size: 1.4rem;
+    margin: 0 0 1rem;
+    color: #333;
+  }
+
+  #search {
+    padding: 0.5rem 0.75rem;
+    margin-bottom: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    width: 100%;
+  }
+
+  .attraction {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    border-radius: 6px;
+    transition: background 0.2s;
+    margin-bottom: 8px;
+    cursor: pointer;
+  }
+
+  .attraction:hover {
+    background: #f2f2f2;
+  }
+
+  .attraction img {
+    width: 52px;
+    height: 52px;
+    object-fit: cover;
+    border-radius: 6px;
+    flex-shrink: 0;
+  }
+
+  .attraction-name {
+    margin-left: 10px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #333;
+  }
+
+  .attraction small {
+    font-size: 0.8rem;
+    color: #666;
+  }
+
+  #sidebar::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  #sidebar::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 4px;
+  }
+
+  #toggle-btn {
+    display: none; /* Hide by default */
+  }
+
+  /* Mobile styles */
+  @media (max-width: 768px) {
     body {
-      margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      display: flex;
-      height: 100vh;
-      overflow: hidden;
-      background: #f0f2f5;
-    }
-
-    #sidebar {
-      width: 300px;
-      background: #ffffff;
-      padding: 1rem;
-      border-right: 1px solid #ddd;
-      overflow-y: auto;
-      display: flex;
       flex-direction: column;
     }
 
-    #sidebar h2 {
-      text-align: center;
-      font-size: 1.4rem;
-      margin: 0 0 1rem;
-      color: #333;
+    #sidebar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: 100%;
+      transform: translateY(-100%);
+      height: 100%;
+      border-right: none;
+      border-bottom: 1px solid #ccc;
+      transition: transform 0.3s ease;
     }
 
-    #search {
-      padding: 0.5rem 0.75rem;
-      margin-bottom: 1rem;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      font-size: 0.95rem;
+    #sidebar.active {
+      transform: translateY(0);
     }
 
-    #attraction-list {
-      flex: 1;
-      overflow-y: auto;
-    }
-
-    .attraction {
-      display: flex;
-      align-items: center;
-      padding: 10px;
-      border-radius: 6px;
-      transition: background 0.2s;
-      margin-bottom: 8px;
+    #toggle-btn {
+      display: block;
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: white;
+      border: 1px solid #aaa;
+      border-radius: 4px;
+      padding: 6px 12px;
+      font-size: 0.9rem;
+      z-index: 1001;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
       cursor: pointer;
     }
+  }
+</style>
 
-    .attraction:hover {
-      background: #f2f2f2;
-    }
-
-    .attraction img {
-      width: 52px;
-      height: 52px;
-      object-fit: cover;
-      border-radius: 6px;
-      flex-shrink: 0;
-    }
-
-    .attraction-name {
-      margin-left: 10px;
-      font-size: 0.95rem;
-      font-weight: 500;
-      color: #333;
-    }
-
-    #map {
-      flex: 1;
-      height: 100%;
-    }
-
-    #sidebar::-webkit-scrollbar {
-      width: 8px;
-    }
-
-    #sidebar::-webkit-scrollbar-thumb {
-      background: #ccc;
-      border-radius: 4px;
-    }
-  </style>
 </head>
 <body>
 
+  <div id="toggle-btn">☰ Attractions</div>
   <div id="sidebar">
     <h2>Padang Attractions</h2>
     <input type="text" id="search" placeholder="Search attractions...">
@@ -105,13 +151,13 @@
 
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script>
-    var map = L.map('map').setView([-0.9471, 100.4172], 13); // Padang
+    const map = L.map('map').setView([-0.9471, 100.4172], 13);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap contributors'
     }).addTo(map);
 
-    var attractions = [
+    const attractions = [
       {
         name: "Pantai Air Manis",
         lat: -1.0078,
@@ -162,27 +208,26 @@
       }
     ];
 
-    var markers = [];
-    var listEl = document.getElementById('attraction-list');
-    var searchInput = document.getElementById('search');
+    const markers = [];
+    const listEl = document.getElementById('attraction-list');
+    const searchInput = document.getElementById('search');
 
     function createAttractionElement(attraction, marker) {
-      var div = document.createElement('div');
+      const div = document.createElement('div');
       div.className = 'attraction';
 
-      var img = document.createElement('img');
+      const img = document.createElement('img');
       img.src = attraction.img;
 
-      var info = document.createElement('div');
+      const info = document.createElement('div');
       info.style.display = "flex";
       info.style.flexDirection = "column";
 
-      var name = document.createElement('div');
+      const name = document.createElement('div');
       name.className = 'attraction-name';
       name.textContent = `📍 ${attraction.name}`;
 
-      var cat = document.createElement('small');
-      cat.style.color = "#666";
+      const cat = document.createElement('small');
       cat.textContent = attraction.category;
 
       info.appendChild(name);
@@ -191,9 +236,14 @@
       div.appendChild(img);
       div.appendChild(info);
 
-      div.addEventListener('click', function () {
+      div.addEventListener('click', () => {
         map.setView([attraction.lat, attraction.lon], 15);
         marker.openPopup();
+
+        // Auto-hide sidebar on mobile
+        if (window.innerWidth < 768) {
+          document.getElementById("sidebar").classList.remove("active");
+        }
       });
 
       return div;
@@ -208,10 +258,10 @@
       });
     }
 
-    attractions.forEach(function(attraction) {
-      var marker = L.marker([attraction.lat, attraction.lon])
+    attractions.forEach(attraction => {
+      const marker = L.marker([attraction.lat, attraction.lon])
         .addTo(map)
-        .bindPopup(`<strong>${attraction.name}</strong><br><em>${attraction.category}</em><br><img src="${attraction.img}" width="150" style="margin-top:5px;"><br><p style="margin:5px 0 0;font-size:0.85rem;">${attraction.desc}</p>`);
+        .bindPopup(`<strong>${attraction.name}</strong><br><em>${attraction.category}</em><br><img src="${attraction.img}" width="150"><br><small>${attraction.desc}</small>`);
       markers.push(marker);
     });
 
@@ -220,7 +270,12 @@
     searchInput.addEventListener("input", function () {
       renderList(this.value);
     });
-  </script>
 
+    // Toggle button for mobile
+    const toggleBtn = document.getElementById('toggle-btn');
+    toggleBtn.addEventListener('click', () => {
+      document.getElementById('sidebar').classList.toggle('active');
+    });
+  </script>
 </body>
 </html>
